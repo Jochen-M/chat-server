@@ -7,6 +7,7 @@ const util = require('util');
 const verify = util.promisify(jwt.verify);
 
 const config = require('../config');
+const sort = require('../../utils/sort');
 
 exports.login = async (ctx) => {
   let username = ctx.request.body.username;
@@ -56,7 +57,7 @@ exports.search = async (ctx) => {
     let payload = await verify(token.split(' ')[1], config().secret);    // 解密，获取payload
     if(payload) {
       let search_text = ctx.request.body.search_text;
-      let users = await User.find({username: {$regex: search_text, $options: 'i'}});
+      let users = await User.find({username: {$regex: search_text, $options: 'i'}}).sort({username: 1});
       ctx.response.body = {status: 200, message: '搜索成功', users: users};
     } else {
       ctx.response.body = {status: 401, message: '认证失效'};
@@ -93,7 +94,8 @@ exports.initFriends = async (ctx) => {
       let user = await User
         .findOne({_id: user_id})
         .populate('friends');
-      ctx.response.body = {status: 200, message: '初始化好友列表成功', friends: user.friends};
+      let friends = user.friends.sort(sort.sortByUsername);
+      ctx.response.body = {status: 200, message: '初始化好友列表成功', friends: friends};
     } else {
       ctx.response.body = {status: 401, message: '认证失效'};
     }
