@@ -29,8 +29,23 @@ module.exports = async(io) => {
           content: message
         }).save();
 
-        if(onlineList[t_uid]) {
+        if(onlineList[t_uid] && onlineList[t_uid] != null) {
           io.to(onlineList[t_uid]).emit('msg', f_uid, t_uid, message);
+        }
+      });
+
+      socket.on('add-friend', function(f_uid, t_uid, request_info) {
+        console.log(f_uid + '-' + t_uid + ': ' + request_info);
+        if(onlineList[t_uid] && onlineList[t_uid] != null) {
+          io.to(onlineList[t_uid]).emit('friend-request', f_uid, request_info);
+        } else {
+          // 存入数据库
+          new Message({
+            f_user: f_uid,
+            t_user: t_uid,
+            content: request_info,
+            type: 'request'
+          }).save();
         }
       });
 
@@ -38,7 +53,7 @@ module.exports = async(io) => {
         console.log('User ' + socket.id + ' disconnected.');
         for(let user of Object.entries(onlineList)) {
           if(socket.id == user[1]) {
-            onlineList[user[0]] = undefined;
+            onlineList[user[0]] = null;
           }
         }
         console.log(onlineList);
@@ -46,7 +61,7 @@ module.exports = async(io) => {
 
       socket.on('leave', function(uid) {
         io.to(onlineList[uid]).emit('disconnect');
-        onlineList[uid] = undefined;
+        onlineList[uid] = null;
         console.log('User ' + socket.id + ' leaved.');
         console.log(onlineList);
       })

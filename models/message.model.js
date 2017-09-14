@@ -14,7 +14,11 @@ let MessageSchema = new Schema({
   },
   content: {
     type: String,
-    required: true
+    required: false
+  },
+  type: {
+    type: String,
+    default: 'message'
   },
   created_at: {
     type: Date,
