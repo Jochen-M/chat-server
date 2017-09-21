@@ -27,3 +27,24 @@ exports.getRequests = async (ctx) => {
     .sort({created_at: 1});
   ctx.response.body = {status: 200, message: '获取好友请求成功', requests: requests};
 };
+
+exports.initChats = async (ctx) => {
+  let user_id = ctx.request.body.user_id;
+  let messages = await Message
+    .find({
+      $or: [
+        {f_user: user_id},
+        {t_user: user_id}
+      ]
+    })
+    .populate('f_user')
+    .populate('t_user');
+  let chats = {};
+  for(let message of messages) {
+    if(message.f_user._id == user_id)
+      chats[message.t_user._id] = message;
+    if(message.t_user._id == user_id)
+      chats[message.f_user._id] = message;
+  }
+  ctx.response.body = {status: 200, message: '初始化聊天信息成功', chats: chats};
+};
